@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>PDQCollection by mvarshney</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      
+      <a href="index.html">< Back</a>
+          <h2>PDQCollections Example: Word Count</h2>
+          <hr>
+          <p>Given a document, the problem is finding the number of times each word appears in the document. We will use a <code>Map</code> of String to Integer to count the number of occurences of each word.</p>
+          <p>We will start with writing a sequential program, then speed it up by executing our computation in parallel. We will then show how the library transparently moves the data to disk, when the memory usage gets high. Finally, we show how to run the same computation on a distributed cluster of machines.</p>
+              
+        <h3>The Computation Code</h3>
+        <p>The actual computation code is simple:</p>
+        
+        <pre><code>@Parallel(name="wordcount")
+public void wordcount(FileReader reader, Map&lt;String, Integer> map) {
+    BufferedReader breader = new BufferedReader(reader);
+    String line;
+    while ((line = breader.readLine()) != null) {
+        String[] words = line.split(" ");
+        for (String word: words) {
+            Integer val = map.get(word);
+            if (val == null)
+                map.put(word, 1);
+            else
+                map.put(word, val + 1);
+        }
+    }
+    breader.close();
+}
+</code></pre>
+        <p>Except for the <code>@Parallel</code>, which we will discuss shortly, the code itself is written in sequential and object-oriented manner. The great thing about the PDQCollections library is that the <strong>sequential code does not need to be modified to run in parallel or distributed modes</strong>.</p> 
+        <p>Our "main" function would be:</p>
+        <pre><code>public static void main(String[] args) {
+    FileReader reader = new FileReader(...);
+    Map&lt;String, Integer> map = new HashMap&lt;String, Integer>();
+    wordcount(reader, map);
+}</code></pre>
+
+<h3>Running Word Count in Parallel</h3>
+
+<p>Let us first list the code, and then we will go over it:</p>
+<pre><code>public static void main(String[] args) {
+    PDQConfig.current().setNumThreads(4);
+    FileReader reader = new PDQReader(...);
+    Map&lt;String, Integer> map = new PDQMap&lt;String, Integer>(PrimitiveAdders.IntegerAdder);
+    PDQ.run("wordcount", reader, map);
+}
+</code></pre>
+
+<p>Couple of things are happening here. First, we use the PDQCollection classes instead of Java native classes for <code>FileReader</code> and <code>Map</code>. This is where we see that the parallelism is included in the data structure implementations, and kept transparent to the programmer. The <code>PDQFileReader</code> class would automatically <em>partition</em> the file into smaller chunks for each thread to process. The <code>PDQMap</code> class takes care of the Split-Replicate-Merge model; as a programmer, we only need to specify how to add values (in this case, we specify an IntegerAdder). </p>
+
+<p>Second, we configure the library to use 4 threads (in the <code>PDQConfig</code> object).</p>
+
+<p>Finally, we invoke the <code>PDQ.run()</code> method, and provide the function and the arguments. The first parameter is a string, which is used to locate the method with same name as defined in the <code>@Parallel</code> annotation. The other arguments match the number and type as the arguments for the method.</p> 
+
+<p>Thats it! Note again that we <strong>have not modified the actual computation method</strong> in any way. When we run this code, the library would spawn four threads, divide the input file into four splits, and run the word count code for each split. After each thread is done, the results are merged using the IntegerAdder object.</p>
+
+
+<h3>When data gets too large.</h3>
+
+<p>When the data gets too large, the PDQCollections library will automatically move the data to disk. We need only specify two additional configuration items:</p>
+
+<pre><code>PDQConfig.current().setFreeMemory("512MB");
+PDQConfig.current().setLocalDir("/tmp");
+</code></pre>
+
+<p>The first parameter specifies the threshold of available memory; if it falls below this limit, the library would move the data to disk. The second parameter specifies the directory where the data will be stored on disk.</p>
+
+<p>Again, no changes to the code.</p>
+
+<h3>Running on distributed cluster.</h3>
+<p>The same computation can be executed on a cluster of machine. At the "worker" machine, we copy the jar file of our executable and run:</p>
+<pre><code>$ java -cp pdqcollection.jar:myapp.jar com.pdqcollections.pdq.PDQWorker
+</code></pre>
+
+<p>At the "master" site, we add the following configuration item:</p>
+    <pre><code>PDQConfig.current().setWorkers("192.168.0.1,192.168.0.2,...");
+</code></pre>
+
+<p>The PDQCollection classes (in this example, <code>PDQFileReader</code> and <code>PDQMap</code>) are all serializable. We only have to ensure that our computation method is serializable.</p>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>

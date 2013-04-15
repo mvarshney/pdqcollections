@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Pdqcollections by mvarshney</title>
+    <title>PDQCollection by mvarshney</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -15,45 +15,79 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1>Pdqcollections</h1>
-        <p>Java Collection Classes for Parallel, Distributed and on-Disk Computations</p>
+        <h1>PDQCollection</h1>
+    <hr>
 
         <p class="view"><a href="https://github.com/mvarshney/pdqcollections">View the Project on GitHub <small>mvarshney/pdqcollections</small></a></p>
 
 
         <ul>
           <li><a href="https://github.com/mvarshney/pdqcollections/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/mvarshney/pdqcollections/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <!--li><a href="https://github.com/mvarshney/pdqcollections/tarball/master">Download <strong>TAR Ball</strong></a></li-->
           <li><a href="https://github.com/mvarshney/pdqcollections">View On <strong>GitHub</strong></a></li>
+          <li><a href="apidocs/index.html">View<strong>API Docs</strong></a></li>
         </ul>
+        
+         <ul>
+              <li style="width:144px;"><a href="http://fmdb.cs.ucla.edu/Treports/PDQCollections%20Paper.pdf">Read <strong>Technical Report</strong></a></li>
+              <li style="width:123px;"><a href="PDQCollections-Slides.pdf">View<strong>Slides</strong></a></li>
+            </ul>
+            <hr>
+        <h3>Examples:</h3>
+        <p><a href="word_count_example.html">Word Count example</a></p>
       </header>
+      
       <section>
-        <h3>Welcome to GitHub Pages.</h3>
+          <h2>Java Collection Classes for Parallel, Distributed and on-Disk Computations</h2>
+          <hr>
+        <h3>What is PDQCollection?</h3>
+        <p>PDQCollection are Java collection classes (<code>Map</code>, <code>Set</code>, etc.) that are specially designed for parallel and distributed data-intensive programming.</p>
+        
+        <p>PDQCollection is a unique programming model that: (a) operates on associative containers, (b) executes in shared-memory parallel mode as well as distributed, (c) supports data sizes that scale from in-memory to disk-backed, and (d) allows developing parallel/distributed programs in the natural sequential and object-oriented style of programming. </p>
+       
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h3>How does it work?</h3>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<p>The key insight to PDQCollection is the <em>Split-Replication-Merge</em> computation model. The input is first <em>splitted</em> into smaller problems and the output is <em>replicated</em> into containers to hold partial results. Parallel or distributed threads compute your function for each pair of partial input and partial output. The partial results are then <em>merged</em> to the final output. <!--See <a href="mastering_the_concepts.html">Mastering the Concepts</a> for further details.</p>-->
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>The second insight is that the parallelism is "built in" into the data structures, rather than scattered over your computation code. As a programmer, you only need to define how two values are to be added, and the library will take care of the rest. See the <a href="word_count_example.html">Word Count example</a> for this concept in action.</p>
 
-<h3>Designer Templates</h3>
+<p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<h3>Is it any good?</h3>
 
-<h3>Rather Drive Stick?</h3>
+<p>Oh, we'll say! And here's why:</p>
+<ul>
+<li><b>PDQCollection does not use locks, ever!</b> </li>
+Concurrent data structures (e.g. <code>ConcurrentHashMap</code>) use locks to protect concurrent modifications. For data-intensive problems, these locks are contests so often that the performance with multiple threads turns out to be actually poorer than sequential! 
+<li><b>PDQCollection does not cache data.</b></li>
+Disk-backed structures are two-tiered: in-memory cache and on-disk B-tree. The cache miss penalty increases as the cache ratio gets smaller. PDQCollection library, however, reads and writes to disk only once, and does not require caches. By avoiding caching and random disk accesses, the PDQCollection classes significantly outperforms traditional disk-backed data structures.
+<li><b>PDQCollection does not randomly seek data on disk or remote machines.</b></li>
+PDQCollection classes always access the out-of-core data (on disk or remote machine) as a sequential stream of bytes, for reading and writing.
+</ul>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>Please refer to the <a href="http://fmdb.cs.ucla.edu/Treports/PDQCollections%20Paper.pdf">Technical Report</a> for detailed performance analysis with concurrent data structures, BerkeleyDB and Hazelcast distributed map.</p>
 
-<h3>Authors and Contributors</h3>
+<h3>Where can it be used?</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>The <a href="http://fmdb.cs.ucla.edu/Treports/PDQCollections%20Paper.pdf">Technical Report</a> gives several examples to illustrate the capabilities of PDQCollections library with several applications drawn from a variety of fields in Computer Science, including</p>
 
-<h3>Support or Contact</h3>
+<ul>
+    <li>Machine Learning (see the KMeans example for clustering)</li>
+    <li>Data Mining (see the FP Growth example for frequent itemset discovery)</li>
+    <li>Graph Processing (see the Pagerank example)</li>
+    <li>Relational processing of structured data</li>
+    <li>Incremental processing of log data</li>
+</ul>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<h3>More Information?</h3>
+
+<p>The PDQCollections library is described in</p>
+
+<p>M. Varshney, V. Goudar, "<em>PDQCollections: A Data-Parallel Programming Model and Library for Associative Containers</em>," UCLA Computer Science Department, Technical Report #130004, April 2013. [<a href="http://fmdb.cs.ucla.edu/Treports/PDQCollections%20Paper.pdf">View PDF</a>]</p>
+
+<p>The technical report is summarized in these <a href="PDQCollections-Slides.pdf">Slides</a>.
+
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/mvarshney">mvarshney</a></p>
